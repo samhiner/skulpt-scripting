@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" type="text/javascript"></script>
+	<script src="http://www.skulpt.org/static/skulpt.min.js" type="text/javascript"></script>
+	<script src="http://www.skulpt.org/static/skulpt-stdlib.js" type="text/javascript"></script>
+</head>
+<body>
+	<script>
+	// output functions are configurable.  This one just appends some text
+	// to a pre element.
+	function outf(text) {
+		var mypre = document.getElementById("output");
+		mypre.innerHTML += text;
+	}
+	function builtinRead(x) {
+		if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) {
+			throw "File not found: '" + x + "'";
+		}
+		return Sk.builtinFiles["files"][x];
+	}
+	function runit() {
+		var pyScripts = document.querySelectorAll("script[type='application/python']")
+		var prog = '';
+		for (var x = 0; x < pyScripts.length; x++) {
+			prog += pyScripts[x].innerHTML;
+		}
+		console.log(prog)
+		Sk.pre = "output"; //ISSUE: check if needed. may be necessary for multiple instances of skulpt
+		Sk.configure({output:outf, read:builtinRead});
+
+		(Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = 'mycanvas';
+
+		var myPromise = Sk.misceval.asyncToPromise(function() {
+			return Sk.importMainWithBody("<stdin>", false, prog, true);
+		});
+
+		myPromise.then(function(mod) {
+			console.log('success');
+		}, function(err) {
+			console.log(err.toString());
+		});
+	}
+	runit();
+	</script>
+</body>
+</html>
