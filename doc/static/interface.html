@@ -19,13 +19,7 @@
 		}
 		return Sk.builtinFiles["files"][x];
 	}
-	function runit() {
-		var pyScripts = document.querySelectorAll("script[type='application/python']")
-		var prog = '';
-		for (var x = 0; x < pyScripts.length; x++) {
-			prog += pyScripts[x].innerHTML;
-		}
-		console.log(prog)
+	function runScript(prog) {
 		Sk.pre = "output"; //ISSUE: check if needed. may be necessary for multiple instances of skulpt
 		Sk.configure({output:outf, read:builtinRead});
 
@@ -41,7 +35,75 @@
 			console.log(err.toString());
 		});
 	}
-	runit();
+
+	function firstChar(string,position,defTabs,defSpaces) {
+		if (['\n','	',' '].indexOf(string[position]) == -1) {
+			console.log(string[position] + ' cool');
+			if (defSpaces != 0 && defTabs == 0) {
+				return ['s',defSpaces]; //ISSUE: don't need s/t anymore and could even not check diff between spaces and tabs.
+			} else if (defTabs != 0 && defSpaces == 0) {
+				return ['t',defTabs]; 
+			} else if (defSpaces != 0 && defTabs != 0) {
+				throw 'SyntaxError: Inconsistent use of tabs and spaces in indentation.';
+			} else {
+				return null;
+			}
+
+		} else if (string[position] == '	') {
+			defTabs += 1;
+		} else if (string[position] == ' ') {
+			defSpaces += 1;
+		} else if (string[position] == '\n') {
+			defTabs = 0;
+			defSpaces = 0;
+		}
+		return firstChar(string,position + 1,defTabs,defSpaces);
+	}
+
+	function normalizeIndent(indent,script) {
+		var deleteNext = false;
+		var newScript = '';
+		var delChars = null;
+		for (var x = 0; x < script.length; x++) {
+			if (deleteNext) {
+				if (delChars == null) {
+					delChars = indent;
+				} else if (delChars == 0) {
+					delChars = null;
+					deleteNext = false;
+				} else {
+					delChars -= 1;
+				}
+			}
+
+			if (deleteNext == false || delChars == 0) {
+				newScript += script[x];
+			}
+
+			if (script[x] == '\n' && script[x + 1] != '\n') {
+				deleteNext = true;
+			}
+		}
+		return newScript;
+	}
+
+	function preProccess() {
+		var pyScripts = document.querySelectorAll("script[type='application/python'], script[type='text/python']");
+		var script = '';
+		for (var x = 0; x < pyScripts.length; x++) {
+			console.log('x' + x)
+			scriptPart = pyScripts[x].innerHTML;
+			var defIndent = firstChar(scriptPart,0,0);
+			console.log(defIndent)
+			if (defIndent != null) {
+				scriptPart = normalizeIndent(defIndent[1],scriptPart);
+			}
+			script += scriptPart;
+		}
+		console.log(script);
+		return runScript(script);
+	}
+	preProccess();
 	</script>
 </body>
 </html>
