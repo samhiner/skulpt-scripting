@@ -87,8 +87,8 @@
 		return newScript;
 	}
 
-	function preProccess() {
-		var pyScripts = document.querySelectorAll("script[type='application/python'], script[type='text/python']");
+	function processScripts() {
+		var pyScripts = document.querySelectorAll("script[type^='application/python'], script[type^='text/python']");
 		var script = '';
 		for (var x = 0; x < pyScripts.length; x++) {
 			console.log('x' + x)
@@ -103,7 +103,7 @@
 		console.log(script);
 		return runScript(script);
 	}
-	preProccess();
+	processScripts();
 	</script>
 </body>
 </html>
